@@ -3,15 +3,38 @@ from Crypto.Random import get_random_bytes
 from Crypto.PublicKey import RSA
 from Crypto import Random
 
-def encryptData(data, session_key):
-        print("-------------------data", len(data))
+def generateRSAKey():
+    private_key = RSA.generate(2048)
+    public_key = private_key.publickey()
+    return private_key, public_key
+    
+    
+def generateSessionKey():
+        # session_key = get_random_bytes(16)
+        session_key = Random.new().read(AES.block_size)     #generating an aes key or a session key
 
+        return session_key
+    
+
+def encryptSessionKey(session_key, c_public_key):
+        rsa_encrypt = PKCS1_OAEP.new(c_public_key)
+        enc_session_key = rsa_encrypt.encrypt(session_key)
+        return enc_session_key
+    
+
+def decryptSessionKey(enc_session_key, c_private_key):
+        rsa_decrypt = PKCS1_OAEP.new(c_private_key)
+        session_key = rsa_decrypt.decrypt(enc_session_key)
+        return session_key
+    
+
+def encryptData(data, session_key):
         pad = 16 - (len(data) % 16)
         data += bytes([pad]) * pad
-        print("-------------------data", len(data))
         cipher_aes = AES.new(session_key, AES.MODE_CBC, session_key)
         ciphertext = cipher_aes.encrypt(data)
         return ciphertext
+    
     
 def decryptData(ciphertext, session_key):
         cipher_aes = AES.new(session_key, AES.MODE_CBC, session_key)
@@ -20,27 +43,27 @@ def decryptData(ciphertext, session_key):
 
         return plaintext
 
-class Server:
-    # _session_key = get_random_bytes(8)
-    # session_key = None
-    _private_key = RSA.generate(2048)
-    public_key = _private_key.publickey()
+# class Server:
+#     # _session_key = get_random_bytes(8)
+#     # session_key = None
+#     _private_key = RSA.generate(2048)
+#     public_key = _private_key.publickey()
     
-    def generateSessionKey(self):
-        # session_key = get_random_bytes(16)
-        session_key = Random.new().read(AES.block_size)     #generating an aes key or a session key
+#     def generateSessionKey(self):
+#         session_key = get_random_bytes(16)
+#         # session_key = Random.new().read(AES.block_size)     #generating an aes key or a session key
 
-        return session_key
+#         return session_key
 
-    # def generateRsaKeyS(self):
-    #     s_private_key = RSA.generate(2048)
-    #     s_public_key = s_private_key.publickey()
-    #     return s_private_key, s_public_key
+#     # def generateRsaKeyS(self):
+#     #     s_private_key = RSA.generate(2048)
+#     #     s_public_key = s_private_key.publickey()
+#     #     return s_private_key, s_public_key
         
-    def encryptSessionKey(self, session_key, c_public_key):
-        rsa_encrypt = PKCS1_OAEP.new(c_public_key)
-        enc_session_key = rsa_encrypt.encrypt(session_key)
-        return enc_session_key
+#     def encryptSessionKey(self, session_key, c_public_key):
+#         rsa_encrypt = PKCS1_OAEP.new(c_public_key)
+#         enc_session_key = rsa_encrypt.encrypt(session_key)
+#         return enc_session_key
     
     # def encryptData(self, data, session_key):
     #     pad = 8 - (len(data) % 8)
@@ -51,20 +74,20 @@ class Server:
     
         
         
-class Client:
-    _private_key = RSA.generate(2048)
-    public_key = _private_key.publickey()
-    _session_key = None
+# class Client:
+#     _private_key = RSA.generate(2048)
+#     public_key = _private_key.publickey()
+#     _session_key = None
     
-    # def generateRsaKeyC(self):
-    #     c_private_key = RSA.generate(2048)
-    #     c_public_key = c_private_key.publickey()
-    #     return c_private_key, c_public_key
+#     # def generateRsaKeyC(self):
+#     #     c_private_key = RSA.generate(2048)
+#     #     c_public_key = c_private_key.publickey()
+#     #     return c_private_key, c_public_key
     
-    def decryptSessionKey(self, enc_session_key):
-        rsa_decrypt = PKCS1_OAEP.new(self._private_key)
-        session_key = rsa_decrypt.decrypt(enc_session_key)
-        return session_key
+#     def decryptSessionKey(self, enc_session_key):
+#         rsa_decrypt = PKCS1_OAEP.new(self._private_key)
+#         session_key = rsa_decrypt.decrypt(enc_session_key)
+#         return session_key
     
     # def decryptData(self, ciphertext, session_key):
     #     cipher_des = DES.new(session_key, DES.MODE_CBC, session_key)
@@ -82,9 +105,9 @@ class Client:
 # enc_session_key = server.encryptSessionKey(c_public_key)
 # client.decryptSessionKey(enc_session_key)
 
-client = Client()
+# client = Client()
 
-server = Server()
+# server = Server()
 # ciphertext = server.encryptData(b"hello", b'Q\x9aSC\xd1\xa9\x0e0')
 # print(ciphertext)
 

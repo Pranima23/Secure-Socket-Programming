@@ -1,28 +1,33 @@
 import socket
-from secure import Client, encryptData, decryptData
+from secure import *
 
-c = socket.socket()
-client = Client()
 
-c.connect(('localhost', 9989))
-c.send(client.public_key.export_key())
-enc_session_key = c.recv(2048)
-session_key = client.decryptSessionKey(enc_session_key)
+def client():
+    private_key, public_key = generateRSAKey()
 
-request = bytes(input(' -> '), "utf-8")
-while request.lower().strip() != "bye":
-    encrypted_request = encryptData(request, session_key)
 
-    c.send(encrypted_request)
+    c = socket.socket()
+    c.connect(('localhost', 9995))
+    
+    # send client's public key to receive an encrypted session key from server
+    c.send(public_key.export_key())
+    enc_session_key = c.recv(2048)
+    
+    #only client's private key can decrypt the encrypted session key
+    session_key = decryptSessionKey(enc_session_key, private_key) 
 
-    encrypted_response = c.recv(2048)
-    response = decryptData(encrypted_response, session_key)
-    print("Server:", response.decode())
-# response = c.recv(1024).decode()
-# print(response)
+    # message from client to server
+    request = bytes(input('Client -> '), "utf-8")
+    while request.lower().strip() != b"bye":
+        encrypted_request = encryptData(request, session_key)
+        c.send(encrypted_request)
 
-# name = input("Enter your name")
-# c.send(bytes(name, "utf-8"))
-# msg = c.recv(1024).decode() #1024 is buffer size
+        # message from server to client
+        encrypted_response = c.recv(2048)
+        response = decryptData(encrypted_response, session_key)
+        print("Server:", response.decode())
 
-# print(msg)
+        request = bytes(input('Client -> '), "utf-8")
+
+if __name__ == "__main__":
+    client()
