@@ -1,17 +1,21 @@
-from Crypto.Cipher import DES, PKCS1_OAEP
+from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Random import get_random_bytes
 from Crypto.PublicKey import RSA
+from Crypto import Random
 
 def encryptData(data, session_key):
-        pad = 8 - (len(data) % 8)
+        print("-------------------data", len(data))
+
+        pad = 16 - (len(data) % 16)
         data += bytes([pad]) * pad
-        cipher_des = DES.new(session_key, DES.MODE_CBC, session_key)
-        ciphertext = cipher_des.encrypt(data)
+        print("-------------------data", len(data))
+        cipher_aes = AES.new(session_key, AES.MODE_CBC, session_key)
+        ciphertext = cipher_aes.encrypt(data)
         return ciphertext
     
 def decryptData(ciphertext, session_key):
-        cipher_des = DES.new(session_key, DES.MODE_CBC, session_key)
-        plaintext = cipher_des.decrypt(ciphertext)
+        cipher_aes = AES.new(session_key, AES.MODE_CBC, session_key)
+        plaintext = cipher_aes.decrypt(ciphertext)
         plaintext = plaintext[:-plaintext[-1]]
 
         return plaintext
@@ -23,7 +27,9 @@ class Server:
     public_key = _private_key.publickey()
     
     def generateSessionKey(self):
-        session_key = get_random_bytes(8)
+        # session_key = get_random_bytes(16)
+        session_key = Random.new().read(AES.block_size)     #generating an aes key or a session key
+
         return session_key
 
     # def generateRsaKeyS(self):

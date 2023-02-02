@@ -2,41 +2,42 @@ import socket
 from secure import Server, encryptData, decryptData
 from Crypto.PublicKey import RSA
 
-
+server = Server()
+session_key = server.generateSessionKey()
 s = socket.socket()
 print('Socket created')
 
-s.bind(('localhost', 9998))
+s.bind(('localhost', 9989))
 
-s.listen(1) # establish connection with 3 client
+s.listen(1) # establish connection with 1 client
 print('waiting for connection')
 
-server = Server()
-session_key = server.generateSessionKey()
 
+c, addr = s.accept()
 
-while True:
+print('Connected with ', addr)
 
-    c, addr = s.accept()
-    print('Connected with ', addr)
-    
-    c_public_key = RSA.import_key(c.recv(1024)) 
-    print("Client's public key: ", c_public_key)
+c_public_key = RSA.import_key(c.recv(2048)) 
+print("Client's public key: ", c_public_key)
      
-    enc_session_key = server.encryptSessionKey(session_key, c_public_key)
+enc_session_key = server.encryptSessionKey(session_key, c_public_key)
+c.send(bytes(enc_session_key))
+    
 
-    c.send(bytes(enc_session_key))
-    
-    encrypted_request = c.recv(1024)
+
+while True:  
+    encrypted_request = c.recv(2048)
+    if not encrypted_request:
+        break
     request = decryptData(encrypted_request, session_key)
-    print(request)
+    print("Client", str(request.decode()))
     
-    response = b"Response"
+    response = bytes(input(" -> "), "utf-8")
     encrypted_response = encryptData(response, session_key)
     c.send(encrypted_response)
     
     # c.send(b"Response")
-    c.close()
+c.close()
 
 # while True:
 #     c, addr = s.accept()
