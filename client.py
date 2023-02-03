@@ -5,9 +5,8 @@ from secure import *
 def client():
     private_key, public_key = generateRSAKey()
 
-
     c = socket.socket()
-    c.connect(('localhost', 9995))
+    c.connect(('localhost', 9999))
     
     # send client's public key to receive an encrypted session key from server
     c.send(public_key.export_key())
@@ -17,7 +16,7 @@ def client():
     session_key = decryptSessionKey(enc_session_key, private_key) 
 
     # message from client to server
-    request = bytes(input('Client -> '), "utf-8")
+    request = bytes(input('Client -> ').encode())
     while request.lower().strip() != b"bye":
         encrypted_request = encryptData(request, session_key)
         c.send(encrypted_request)
@@ -27,7 +26,7 @@ def client():
         response = decryptData(encrypted_response, session_key)
         print("Server:", response.decode())
 
-        request = bytes(input('Client -> '), "utf-8")
+        request = bytes(input('Client -> ').encode())
 
 if __name__ == "__main__":
     client()

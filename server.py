@@ -1,6 +1,11 @@
 import socket
 from secure import *
 from Crypto.PublicKey import RSA
+import re
+
+def sanitizeRequest(request):
+    sanitized_request = re.sub(r'[^\w\s]', '', str(request.decode()))   # sanitize message
+    return sanitized_request
 
 def server():
 
@@ -8,7 +13,7 @@ def server():
 
     s = socket.socket()
     print('Socket created')
-    s.bind(('localhost', 9995))
+    s.bind(('localhost', 9999))
 
     s.listen(1)
     print('Waiting for connection...')
@@ -24,14 +29,20 @@ def server():
     
     while True:  
         # message from client to server
-        encrypted_request = c.recv(2048)
+        encrypted_request = b""
+        while True:
+            chunk = c.recv(4096)
+            encrypted_request += chunk
+            if len(chunk)<2048:
+                break
         if not encrypted_request:
             break
         request = decryptData(encrypted_request, session_key)
-        print("Client", str(request.decode()))
+        sanitized_request = sanitizeRequest(request)
+        print("Client", sanitized_request)
         
         # message from server to client
-        response = bytes(input("Server -> "), "utf-8")
+        response = bytes(input("Server -> ").encode())
         encrypted_response = encryptData(response, session_key)
         c.send(encrypted_response)
         
